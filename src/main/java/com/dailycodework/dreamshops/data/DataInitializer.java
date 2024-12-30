@@ -1,33 +1,39 @@
 package com.dailycodework.dreamshops.data;
+
 import com.dailycodework.dreamshops.model.Role;
 import com.dailycodework.dreamshops.model.User;
 import com.dailycodework.dreamshops.repository.RoleRepository;
 import com.dailycodework.dreamshops.repository.UserRepository;
-import com.dailycodework.dreamshops.response.ApiResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.UserRoleAuthorizationInterceptor;
 
 import java.util.Set;
 
 @Transactional
 @Component
 @RequiredArgsConstructor
-public class DataInitializer implements ApplicationListener <ApplicationReadyEvent> {
+public class DataInitializer implements ApplicationListener<ApplicationReadyEvent> {
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         Set<String> defaultRoles = Set.of("ROLE_ADMIN", "ROLE_USER");
-        createDefaultUserIfNotExists();
+
+        // Asegurarse de que los roles estén creados primero
         createDefaultRoleIfNotExists(defaultRoles);
+
+        // Crear usuarios después de los roles
+        createDefaultUserIfNotExists();
         createDefaultAdminIfNotExists();
     }
+
     private void createDefaultUserIfNotExists() {
         roleRepository.findByName("ROLE_USER").ifPresentOrElse(userRole -> {
             for (int i = 1; i <= 5; i++) {
@@ -71,9 +77,16 @@ public class DataInitializer implements ApplicationListener <ApplicationReadyEve
     }
 
     private void createDefaultRoleIfNotExists(Set<String> roles) {
-        roles.stream()
-                .filter(role -> roleRepository.findByName(role).isEmpty())
-                .map(Role::new).forEach(roleRepository::save);
+        roles.forEach(roleName -> {
+            roleRepository.findByName(roleName).ifPresentOrElse(role -> {
+                // El rol ya existe, no hace nada
+                System.out.println("Role " + roleName + " already exists.");
+            }, () -> {
+                // Si no existe el rol, lo crea
+                Role role = new Role(roleName);
+                roleRepository.save(role);
+                System.out.println("Role " + roleName + " created successfully.");
+            });
+        });
     }
 }
-
