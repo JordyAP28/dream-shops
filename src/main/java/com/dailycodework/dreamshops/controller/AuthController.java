@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("${api.prefix}/carts")
+@RequestMapping("${api.prefix}/auth")
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
@@ -42,4 +42,3 @@ public class AuthController {
         }
     }
 }
-
